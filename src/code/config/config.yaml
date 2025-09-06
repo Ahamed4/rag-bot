@@ -1,0 +1,4 @@
+default_llm_models:
+  groq: "llama-3.1-8b-instant"
+  gemini: "gemini-1.5-pro"
+  openai: "gpt-3.5-turbo"

@@ -2,7 +2,7 @@ from dataclasses import dataclass,field
 from typing import Optional
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
-from code.utils import load_env
+from app_code.utils import load_env
 import os
 
 @dataclass

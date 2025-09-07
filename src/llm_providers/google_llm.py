@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 from langchain_google_genai import ChatGoogleGenerativeAI
-from code.utils import load_env
+from app_code.utils import load_env
 import os
 
 @dataclass

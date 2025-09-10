@@ -1,8 +1,14 @@
 from app_code.utils import json_to_markdown as create_md
-from app_code.chroma_db_ingest import main as ingest_data
-from app_code.initialize_llm import main as initialize_llm
+from app_code.chroma_db_ingest import main as ingest_data,load_all_publications
+from app_code.chroma_db_rag import main as rag_assistant
+from app_code.logger import logger
+from app_code.db_manager import shutdown
 from paths import SOURCE_DATA_DIR
 import os
+import atexit
+
+# Register shutdown function to run at exit
+atexit.register(shutdown)
 
 def main():
     print("Welcome to the Interactive LLM Terminal!")
@@ -10,8 +16,11 @@ def main():
     
     query = input("Do you want to convert a JSON file to markdown files? (y/n) [default: y]: ").strip().lower()
     if query not in ('y', 'yes', ''):
-        print("\033[1;31mPlease ensure that you have required markdown files in the data directory as a data source.\033[0m")
-        print("Skipping JSON to markdown conversion.")
+        if len(load_all_publications()) == 0:
+            logger.error("\033[1;31mPlease ensure that you have required markdown files in the data directory as a data source.\033[0m")
+            exit()
+        else:
+            logger.info("Skipping JSON to markdown conversion.")
         return
     # Query 1: JSON file name
     query1 = input("Enter the json file name to convert to markdown (or press Enter to use default): ").strip()
@@ -45,9 +54,12 @@ def main():
         create_md()  # Use all defaults
 
 if __name__ == "__main__":
-    main()
-    ingest_data()
-    print("\nData ingestion completed.")
-    print("-" * 100)
-    # print("\nNow, let's set up the LLM.")
-    # initialize_llm()
+    try:
+        main()
+        logger.info("\nData ingestion Started...")
+        ingest_data()
+        logger.info("\nData ingestion completed.")
+        rag_assistant()
+        logger.info("-" * 100)
+    finally:
+        shutdown()

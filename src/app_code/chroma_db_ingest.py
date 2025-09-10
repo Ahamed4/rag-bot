@@ -7,7 +7,8 @@ from paths import VECTOR_DB_DIR
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app_code.utils import load_all_publications
-
+from app_code.logger import logger
+from app_code.db_manager import get_client, shutdown
 
 def initialize_db(
     persist_directory: str = VECTOR_DB_DIR,
@@ -25,20 +26,28 @@ def initialize_db(
         chromadb.Collection: The ChromaDB collection instance
     """
     if os.path.exists(persist_directory) and delete_existing:
-        shutil.rmtree(persist_directory)
+        # First ensure no client is connected
+        shutdown()
 
-    print(f"Using persist directory: {persist_directory}")
+        try:
+            shutil.rmtree(persist_directory)
+            logger.info(f"Successfully deleted existing database at {persist_directory}")
+        except PermissionError as e:
+            logger.error("\033[1;31mFailed to delete vector_db directory. Make sure no process is using chroma.sqlite3.\033[0m")
+            logger.error(e)
+
+    logger.debug(f"Using persist directory: {persist_directory}")
 
     os.makedirs(persist_directory, exist_ok=True)
 
-    # Initialize ChromaDB client with persistent storage
-    client = chromadb.PersistentClient(path=persist_directory)
+    # Get a fresh client after potential deletion
+    client = get_client()
 
     # Create or get a collection
     try:
         # Try to get existing collection first
         collection = client.get_collection(name=collection_name)
-        print(f"Retrieved existing collection: {collection_name}")
+        logger.debug(f"Retrieved existing collection: {collection_name}")
     except Exception:
         # If collection doesn't exist, create it
         collection = client.create_collection(
@@ -48,30 +57,16 @@ def initialize_db(
                 "hnsw:batch_size": 10000,
             },  # Use cosine distance for semantic search
         )
-        print(f"Created new collection: {collection_name}")
+        logger.debug(f"Created new collection: {collection_name}")
 
-    print(f"ChromaDB initialized with persistent storage at: {persist_directory}")
+    logger.debug(f"ChromaDB initialized with persistent storage at: {persist_directory}")
 
     return collection
 
-
-def get_db_collection(
-    persist_directory: str = VECTOR_DB_DIR,
-    collection_name: str = "publications",
-) -> chromadb.Collection:
-    """
-    Get a ChromaDB client instance.
-
-    Args:
-        persist_directory (str): The directory where ChromaDB persists data
-        collection_name (str): The name of the collection to get
-
-    Returns:
-        chromadb.PersistentClient: The ChromaDB client instance
-    """
-    return chromadb.PersistentClient(path=persist_directory).get_collection(
-        name=collection_name
-    )
+def get_db_collection(collection_name="publications"):
+    """Get a collection from the database."""
+    from app_code.db_manager import get_collection
+    return get_collection(collection_name)
 
 def chunk_publication(
     publication: str, chunk_size: int = 1000, chunk_overlap: int = 200
@@ -139,7 +134,7 @@ def main():
     publications = load_all_publications()
     insert_publications(collection, publications)
 
-    print(f"Total documents in collection: {collection.count()}")
+    logger.debug(f"Total documents in collection: {collection.count()}")
 
 
 if __name__ == "__main__":

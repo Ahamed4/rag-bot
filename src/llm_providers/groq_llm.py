@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 from langchain_groq import ChatGroq
 from pydantic import SecretStr
+from adapters.llm_client_adapter import LLMClientAdapter
 from app_code.utils import load_env
 import os
 
@@ -15,16 +16,18 @@ class GroqChatLLM:
         load_env()
         self.api_key = os.getenv("GROQ_API_KEY")
 
-    def create_llm(self, model_name=None, temperature = 0.0, **kwargs):   
+    def create_llm(self, model_name=None, temperature = 0.0, **kwargs) -> LLMClientAdapter:   
         """ Use model_name from parameter or default if not provided."""
         model_name = model_name or self.default_model_name
 
         if self.api_key is None:
             raise ValueError("Groq API key is missing. Please set the API key.")
     
-        return ChatGroq(
+        client = ChatGroq(
             api_key=SecretStr(self.api_key),
             model=model_name, 
             temperature=temperature, 
             **kwargs
         )
+
+        return LLMClientAdapter(client)

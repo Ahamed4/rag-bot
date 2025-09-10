@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 from langchain_google_genai import ChatGoogleGenerativeAI
+from adapters.llm_client_adapter import LLMClientAdapter
 from app_code.utils import load_env
 import os
 
@@ -13,19 +14,21 @@ class GoogleChatLLM:
         load_env()
         self.api_key = os.getenv("GOOGLE_API_KEY")
     
-    def create_llm(self, model_name=None, temperature = 0.0, **kwargs):
+    def create_llm(self, model_name=None, temperature = 0.0, **kwargs) -> LLMClientAdapter:
         
         model_name = model_name or self.default_model_name
 
         if self.api_key is None:
             raise ValueError("Gemini API key is missing. Please set the API key.")
 
-        return ChatGoogleGenerativeAI(
+        client = ChatGoogleGenerativeAI(
             api_key=self.api_key, 
             model=model_name, 
             temperature=temperature, 
             **kwargs
         )
+
+        return LLMClientAdapter(client)
 
 
        

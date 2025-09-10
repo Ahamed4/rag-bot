@@ -123,14 +123,11 @@ def main():
     rag_assistant_prompt = prompt_config["rag_assistant_prompt"]
     vectordb_params = app_config["vectordb"]
     llm_client = initialize_llm()
-    if llm_client is None:
-        logger.error("LLM initialization failed. Please check your configuration and API keys.")
-        exit()
 
     exit_app = False
     while not exit_app:
         query = input(
-            "Enter a question, 'config' to change the parameters, or 'exit' to quit: "
+            "Enter a question, 'config' to change the parameters, 'llm' to change the LLM, or 'exit' to quit: "
         )
         if query == "exit":
             exit_app = True
@@ -143,6 +140,9 @@ def main():
                 "threshold": threshold,
                 "n_results": n_results,
             }
+            continue
+        elif query == "llm":
+            llm_client = initialize_llm()
             continue
 
         response = respond_to_query(

@@ -88,7 +88,7 @@ def create_markdown_from_json(entry, output_dir, output_filename):
     output_filename = f"{entry.get('id', output_filename)}.md"
 
     # Create markdown content
-    md_content = f"# Title\n\n{entry.get('title', 'No Title')}\n\n---\n\n"
+    md_content = f"# {entry.get('title', 'No Title')}---\n\n"
     md_content += f"**Authors:** {', '.join(author for author in entry.get('authors', []))}\n\n---\n\n"
     md_content += f"**Tags:** {', '.join(tag for tag in entry.get('tags', []))}\n\n---\n\n"
     md_content += f"**License:** {entry.get('license', 'No License')}\n\n---\n\n"

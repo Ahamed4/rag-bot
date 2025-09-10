@@ -32,7 +32,7 @@ def get_llm_parameters(provider_name):
     temperature = float(temperature) if temperature else 0.0
     return model_name, temperature
     
-def main() -> LLMClientAdapter | None:
+def main() -> LLMClientAdapter:
     logger.info("Let us initialize the LLM.")
     provider_name = get_provider_choice()
     logger.info(f"Selected provider: {provider_name}")
@@ -41,10 +41,13 @@ def main() -> LLMClientAdapter | None:
         llm_provider = LLMFactory.get_llm_provider(provider_name)
         llm = llm_provider.create_llm(model_name=model_name, temperature=temperature)
         logger.info(f"Success! Instantiated '{provider_name.capitalize()}' LLM with model '{model_name}' and temperature {temperature}.")
+        if llm is None:
+            logger.error("LLM initialization failed. Please check your configuration and API keys.")
+            exit()
         return llm
     except Exception as e:
         logger.error(f"Error instantiating LLM: {e}")
-        return        
+        exit()        
 
 if __name__ == "__main__":
     main()

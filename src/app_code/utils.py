@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Union
 import json
 from paths import ENV_FPATH, SOURCE_DATA_DIR, DATA_DIR
+from utility.load_file import load_file
 
 def load_env(api_key_type="GROQ_API_KEY") -> None:
     """Loads environment variables from a .env file and checks for required keys.
@@ -125,6 +126,28 @@ def load_publication(publication_external_id="0CBAR8U8FakE"):
             return file.read()
     except IOError as e:
         raise IOError(f"Error reading publication file: {e}") from e
+    
+def load_publication_by_name(publication_name: str):
+    """Loads the publication markdown file.
+
+    Returns:
+        Content of the publication as a string.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        IOError: If there's an error reading the file.
+    """
+    publication_fpath = Path(os.path.join(DATA_DIR, publication_name))
+
+    # Check if file exists
+    if not publication_fpath.exists():
+        raise FileNotFoundError(f"Publication file not found: {publication_fpath}")
+
+    # Read and return the file content
+    try:
+        return load_file(publication_fpath)
+    except IOError as e:
+        raise IOError(f"Error reading publication file: {e}") from e
 
 
 def load_all_publications(publication_dir: str = DATA_DIR) -> list[str]:
@@ -135,8 +158,8 @@ def load_all_publications(publication_dir: str = DATA_DIR) -> list[str]:
     """
     publications = []
     for pub_id in os.listdir(publication_dir):
-        if pub_id.endswith(".md"):
-            publications.append(load_publication(pub_id.replace(".md", "")))
+        if pub_id.endswith((".md", ".txt", ".pdf", ".docx")):
+            publications.append(load_publication_by_name(pub_id))
     return publications
 
 if __name__ == "__main__":

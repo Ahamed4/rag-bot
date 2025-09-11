@@ -42,6 +42,11 @@ def retrieve_relevant_documents(
     query_embedding = embed_documents([query])[0]  # Get the first (and only) embedding
 
     logger.info("Querying collection...")
+
+    if collection is None:
+        logger.error("Collection is None. Cannot query the database.")
+        return []
+    
     # Query the collection
     results = collection.query(
         query_embeddings=[query_embedding],
